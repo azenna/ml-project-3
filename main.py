@@ -147,14 +147,11 @@ def run(args):
         f.write(json.dumps(run_log) + "\n")
 
 
-def run_all_configs():
-    for config in configuration.configurations:
+def run_all_configs(configs):
+    for config in configs:
         with open("run_log.jsonl", "r") as f:
             runs = [json.loads(line) for line in f.readlines()]
-            if any(
-                all(run.get(k) == v for k, v in config.items() if k != "tune")
-                for run in runs
-            ):
+            if any(all(run.get(k) == v for k, v in config.items()) for run in runs):
                 print("Skipping: ", config)
                 continue
 
@@ -181,9 +178,9 @@ def main():
     args = parser.parse_args()
 
     if args.configs and args.tune:
-        run_all_configs(tune_configurations)
+        run_all_configs(configuration.tune_configurations)
     else:
-        run_all_configs(test_configurations)
+        run_all_configs(configuration.test_configurations)
 
 
 if __name__ == "__main__":

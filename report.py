@@ -3,23 +3,17 @@ import json
 from prettytable import PrettyTable
 
 
-def filter_runs(arch, dataset, runs):
-    # filter for arch and dataset
-    runs = [
-        run for run in runs if run["architecture"] == arch and run["dataset"] == dataset
-    ]
-
-    # filter for non trivial runs
-    runs = [
-        run for run in runs if "num_epochs" in run.keys() and run["num_epochs"] >= 8
-    ]
-
-    return runs
-
-
 def mlp_report(runs):
     table = PrettyTable()
-    table.field_names = ["LR", "Batch", "Opt", "Dropout", "Acc", "Runtime"]
+    table.field_names = [
+        "Arch",
+        "LR",
+        "Batch",
+        "Opt",
+        "Dropout",
+        "Acc",
+        "Runtime",
+    ]
     table.sortby = "Acc"
     table.reversesort = True
 
@@ -27,6 +21,7 @@ def mlp_report(runs):
         try:
             table.add_row(
                 [
+                    run["architecture"],
                     run["learning_rate"],
                     run["batch_size"],
                     run["optimizer"],
@@ -43,7 +38,7 @@ def mlp_report(runs):
 
 def conv_report(runs):
     table = PrettyTable()
-    table.field_names = ["LR", "Batch", "L2", "Acc", "Runtime"]
+    table.field_names = ["Arch", "LR", "Batch", "L2", "Acc", "Runtime"]
     table.sortby = "Acc"
     table.reversesort = True
 
@@ -51,6 +46,7 @@ def conv_report(runs):
         try:
             table.add_row(
                 [
+                    run["architecture"],
                     run["learning_rate"],
                     run["batch_size"],
                     run["weight_decay"],
@@ -67,15 +63,33 @@ def conv_report(runs):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-a", "--arch", required=True)
+    parser.add_argument("-a", "--arch")
+
     parser.add_argument("-d", "--dataset", required=True)
+    parser.add_argument("--test", action="store_true")
 
     args = parser.parse_args()
+
+    filters = [lambda run: run["num_epochs"] >= 8]
+
+    if args.arch:
+        filters.append(lambda run: args.arch in run["architecture"])
+    if args.dataset:
+        filters.append(lambda run: run["dataset"] == args.dataset)
+    if args.test:
+        filters.append(lambda run: not run["tune"])
 
     with open("run_log.jsonl", "r") as file:
         lines = file.readlines()
         runs = [json.loads(line) for line in lines]
-        filtered_runs = filter_runs(args.arch, args.dataset, runs)
+
+        filtered_runs = []
+        for run in runs:
+            try:
+                if all(f(run) for f in filters):
+                    filtered_runs.append(run)
+            except:
+                continue
 
         if "mlp" in args.arch:
             table = mlp_report(filtered_runs)

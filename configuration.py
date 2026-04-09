@@ -1,15 +1,24 @@
-
 def patch_configuration(config):
-    defaults = {"optimizer": "adam", "dropout": 0.0, "weight_decay", 0.0, "tune": False, "num_epochs": 16, "batch_size": 64, "learning_rate": 0.001}
+    defaults = {
+        "optimizer": "adam",
+        "dropout": 0.0,
+        "weight_decay": 0.0,
+        "tune": False,
+        "num_epochs": 16,
+        "batch_size": 64,
+        "learning_rate": 0.001,
+    }
 
-    for k,v in defaults.items():
+    for k, v in defaults.items():
         if k in config.keys():
             continue
         else:
-            defaults[k] = v
+            config[k] = v
+
+    return config
 
 
-mlp_param_configurations = [
+tune_mlp_param_configurations = [
     {
         "learning_rate": 0.001,
         "batch_size": 32,
@@ -84,20 +93,21 @@ mlp_param_configurations = [
     },  # sgd test if batch_size = 128 better
 ]
 
-mlp_configurations = [
-    {
-        "architecture": architecture,
-        "dataset": dataset,
-        "tune": True,
-        "num_epochs": 16,
-        **patch_config(config),
-    }
-    for config in mlp_param_configurations
+tune_mlp_configurations = [
+    patch_configuration(
+        {
+            "architecture": architecture,
+            "dataset": dataset,
+            "tune": True,
+            **config,
+        }
+    )
+    for config in tune_mlp_param_configurations
     for architecture in ["shallow_mlp", "medium_mlp", "deep_mlp"]
     for dataset in ["mnist", "cifar"]
 ]
 
-conv_param_configurations = [
+tune_conv_param_configurations = [
     {"learning_rate": 0.001, "batch_size": 32, "weight_decay": 1e-4},  # baseline
     {
         "learning_rate": 0.01,
@@ -131,23 +141,24 @@ conv_param_configurations = [
     },  # weight_decay = 5e-3
 ]
 
-conv_configurations = [
-    {
-        "architecture": architecture,
-        "dataset": dataset,
-        "tune": True,
-        "num_epochs": 32,
-        **patch_configuration(config),
-    }
-    for config in conv_param_configurations
+tune_conv_configurations = [
+    patch_configuration(
+        {
+            "architecture": architecture,
+            "dataset": dataset,
+            "tune": True,
+            "num_epochs": 32,
+            **config,
+        }
+    )
+    for config in tune_conv_param_configurations
     for architecture in ["simple_conv", "enhanced_conv"]
     for dataset in ["mnist", "cifar"]
 ]
 
-tune_configurations = mlp_configurations + conv_configurations
+tune_configurations = tune_mlp_configurations + tune_conv_configurations
 
-
-test_configurations = [
+unpatched_test_configurations = [
     {
         "dataset": "mnist",
         "architecture": "shallow_mlp",
@@ -234,4 +245,7 @@ test_configurations = [
         "weight_decay": 0.0,
         "num_epochs": 32,
     },
+]
+test_configurations = [
+    patch_configuration(config) for config in unpatched_test_configurations
 ]
