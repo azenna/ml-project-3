@@ -81,7 +81,7 @@ mlp_configurations = [
             "arch": arch,
             "dataset": dataset,
             "tune": True,
-            "num_epochs": 1,
+            "num_epochs": 16,
             "weight_decay": 0.0,
             **config,
         }
@@ -131,8 +131,9 @@ conv_configurations = [
             "arch": arch,
             "dataset": dataset,
             "tune": True,
-            "num_epochs": 1,
+            "num_epochs": 32,
             "dropout": 0.0,
+            "optimizer": "adam",
             **config,
         }
     )
