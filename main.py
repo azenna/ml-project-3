@@ -1,6 +1,7 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
+from types import SimpleNamespace
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
@@ -99,7 +100,7 @@ def evaluate(model, loader):
 
 
 def train_and_eval(args):
-    arch = architecture.get_architectures(args.dropout)[args.dataset][args.arch]
+    arch = architecture.get_architectures(args.dropout)[args.dataset][args.architecture]
 
     (train_load, eval_load) = load_train_test(
         args.dataset, args.batch_size, validation=args.tune
@@ -125,7 +126,8 @@ def train_and_eval(args):
     return {
         "timestamp": timestamp,
         "dataset": args.dataset,
-        "architecture": args.arch,
+        "tune": args.tune,
+        "architecture": args.architecture,
         "batch_size": args.batch_size,
         "learning_rate": args.learning_rate,
         "optimizer": args.optimizer,
@@ -138,7 +140,7 @@ def train_and_eval(args):
 
 
 def run(args):
-    print("=" * 32 + f"{args.dataset} {args.arch}" + "=" * 32)
+    print("=" * 32 + f"{args.dataset} {args.architecture}" + "=" * 32)
     run_log = train_and_eval(args)
 
     with open("run_log.jsonl", "a") as f:
@@ -147,7 +149,16 @@ def run(args):
 
 def run_all_configs():
     for config in configuration.configurations:
-        run(config)
+        with open("run_log.jsonl", "r") as f:
+            runs = [json.loads(line) for line in f.readlines()]
+            if any(
+                all(run.get(k) == v for k, v in config.items() if k != "tune")
+                for run in runs
+            ):
+                print("Skipping: ", config)
+                continue
+
+        run(SimpleNamespace(config))
 
 
 # Program that keeps a set of logs of each run
@@ -158,21 +169,21 @@ def main():
 
     parser.add_argument("--tune", action="store_true")
     parser.add_argument("--configs", action="store_true")
-    parser.add_argument("-a", "--arch")
+    parser.add_argument("-a", "--architecture")
     parser.add_argument("-d", "--dataset")
     parser.add_argument("-b", "--batch_size", type=int, default=32)
     parser.add_argument("-n", "--num_epochs", type=int, default=16)
     parser.add_argument("-o", "--optimizer", default="adam")
     parser.add_argument("-l", "--learning_rate", type=float, default=0.001)
-    parser.add_argument("--dropout", type=float, default=0.5)
+    parser.add_argument("--dropout", type=float, default=0.0)
     parser.add_argument("--weight_decay", type=float, default=0.0)
 
     args = parser.parse_args()
 
-    if args.configs:
-        run_all_configs()
+    if args.configs and args.tune:
+        run_all_configs(tune_configurations)
     else:
-        run(args)
+        run_all_configs(test_configurations)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 
 ## Hyperparamater Tuning
 
+
 ### MNIST
 
 #### Shallow MLP
@@ -59,8 +60,30 @@
 +--------+-------+------+---------+--------+-------------+
 
 #### Simple CNN
++--------+-------+--------+--------+-------------+
+|   LR   | Batch |   L2   |  Acc   |   Runtime   |
++--------+-------+--------+--------+-------------+
+| 0.001  |   64  |  0.0   | 0.9914 |  65.917064s |
+| 0.001  |   64  | 0.005  | 0.9897 |  61.270601s |
+| 0.001  |   64  | 0.0001 | 0.9885 |  64.817863s |
+| 0.001  |   32  | 0.0001 | 0.9882 | 273.198989s |
+| 0.0001 |   32  | 0.0001 | 0.9882 | 117.321126s |
+| 0.001  |  128  | 0.0001 | 0.987  |  37.414027s |
+|  0.01  |   32  | 0.0001 | 0.9866 | 116.705469s |
++--------+-------+--------+--------+-------------+
 
 #### Enhanced CNN
++--------+-------+--------+--------+-------------+
+|   LR   | Batch |   L2   |  Acc   |   Runtime   |
++--------+-------+--------+--------+-------------+
+| 0.001  |   64  | 0.0001 | 0.9951 |  74.394916s |
+| 0.001  |   64  |  0.0   | 0.9936 |  70.366497s |
+| 0.001  |  128  | 0.0001 | 0.992  |  53.862178s |
+|  0.01  |   32  | 0.0001 | 0.9904 | 138.284246s |
+| 0.001  |   64  | 0.005  | 0.9902 |  70.026856s |
+| 0.0001 |   32  | 0.0001 | 0.9898 | 139.986008s |
+| 0.001  |   32  | 0.0001 | 0.9883 | 223.882436s |
++--------+-------+--------+--------+-------------+
 
 ### CIFAR
 
@@ -120,11 +143,35 @@
 +--------+-------+------+---------+--------+-------------+
 
 #### Simple CNN
++--------+-------+--------+--------+-------------+
+|   LR   | Batch |   L2   |  Acc   |   Runtime   |
++--------+-------+--------+--------+-------------+
+| 0.001  |   32  |  0.0   | 0.6862 |  53.177384s |
+| 0.0001 |   32  | 0.0001 | 0.685  | 111.089649s |
+| 0.001  |  128  | 0.0001 | 0.6706 |  39.506216s |
+| 0.001  |   64  | 0.0001 | 0.669  |  68.208063s |
+| 0.001  |   64  | 0.005  | 0.6654 |  62.268823s |
+| 0.001  |   64  |  0.0   | 0.6652 |  61.040109s |
+| 0.001  |   32  | 0.0001 | 0.6652 | 250.188397s |
+|  0.01  |   32  | 0.0001 | 0.648  | 113.373810s |
++--------+-------+--------+--------+-------------+
 
 #### Enhanced CNN
++--------+-------+--------+--------+-------------+
+|   LR   | Batch |   L2   |  Acc   |   Runtime   |
++--------+-------+--------+--------+-------------+
+| 0.001  |   64  |  0.0   | 0.7586 |  68.779191s |
+| 0.001  |  128  | 0.0001 | 0.7568 |  58.288146s |
+| 0.001  |   64  | 0.005  | 0.751  |  69.252253s |
+| 0.001  |   32  | 0.0001 | 0.7458 | 126.298801s |
+| 0.001  |   64  | 0.0001 | 0.7426 |  73.225987s |
+| 0.0001 |   32  | 0.0001 | 0.7004 | 128.690589s |
+|  0.01  |   32  | 0.0001 | 0.672  | 129.257144s |
++--------+-------+--------+--------+-------------+
 
 ### Discussion
 
 ## Test Results
 
 ## Key Challenges
+A key challenge I faced while implementing this project was data aggregation. The requirements state that for each data set, every of 5 architectures, should be evaluated on at least 10 hyperparmater sets, to find the best model configuration for the data set and given architecture. That's 2 * 5 * 10 = a minimum of 100 different training runs whose details need to be reported out. This is almost impossible to do manually. Instead I have each training run log a json object, to an append only log in `./run_log.jsonl`. This log acts as both a data store, from which we can create tables with `./report.py`, and a cache, so that the training harness, knows which configurations have been tried before and can be skipped. Reporting can then easily be defined as a query on the structured run_log output to generate the tables you see in this report.

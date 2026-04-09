@@ -90,7 +90,7 @@ def enh_conv_mnist():
         nn.ReLU(),
         nn.MaxPool2d(kernel_size=2),
         nn.Flatten(),
-        nn.Linear(128 * 7 * 7, 128),
+        nn.Linear(128 * 3 * 3, 128),
         nn.ReLU(),
         nn.Linear(128, 10),
     )
@@ -185,7 +185,7 @@ def enh_conv_cifar():
         nn.ReLU(),
         nn.MaxPool2d(kernel_size=2),
         nn.Flatten(),
-        nn.Linear(128 * 8 * 8, 128),
+        nn.Linear(128 * 4 * 4, 128),
         nn.ReLU(),
         nn.Linear(128, 10),
     )
