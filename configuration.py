@@ -76,7 +76,16 @@ mlp_param_configurations = [
 ]
 
 mlp_configurations = [
-    SimpleNamespace(**{"arch": arch, "dataset": dataset, "tune": True, **config})
+    SimpleNamespace(
+        **{
+            "arch": arch,
+            "dataset": dataset,
+            "tune": True,
+            "num_epochs": 1,
+            "weight_decay": 0.0,
+            **config,
+        }
+    )
     for config in mlp_param_configurations
     for arch in ["shallow_mlp", "medium_mlp", "deep_mlp"]
     for dataset in ["mnist", "cifar"]
@@ -117,7 +126,16 @@ conv_param_configurations = [
 ]
 
 conv_configurations = [
-    SimpleNamespace(**{"arch": arch, "dataset": dataset, "tune": True, **config})
+    SimpleNamespace(
+        **{
+            "arch": arch,
+            "dataset": dataset,
+            "tune": True,
+            "num_epochs": 1,
+            "dropout": 0.0,
+            **config,
+        }
+    )
     for config in conv_param_configurations
     for arch in ["simple_conv", "enhanced_conv"]
     for dataset in ["mnist", "cifar"]

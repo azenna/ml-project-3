@@ -12,6 +12,7 @@ import argparse
 import json
 from datetime import datetime, timezone
 import configuration
+import time
 
 device = torch.device("cuda")
 
@@ -93,6 +94,7 @@ def evaluate(model, loader):
             all_preds.extend(preds.cpu().numpy())
             targets.extend(target.numpy())
 
+    print(classification_report(targets, all_preds, digits=4))
     return classification_report(targets, all_preds, digits=4, output_dict=True)
 
 
@@ -136,6 +138,7 @@ def train_and_eval(args):
 
 
 def run(args):
+    print("=" * 32 + f"{args.dataset} {args.arch}" + "=" * 32)
     run_log = train_and_eval(args)
 
     with open("run_log.jsonl", "a") as f:
