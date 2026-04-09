@@ -76,8 +76,11 @@ def main():
         filters.append(lambda run: args.arch in run["architecture"])
     if args.dataset:
         filters.append(lambda run: run["dataset"] == args.dataset)
+
     if args.test:
         filters.append(lambda run: not run["tune"])
+    else:
+        filters.append(lambda run: run["tune"])
 
     with open("run_log.jsonl", "r") as file:
         lines = file.readlines()

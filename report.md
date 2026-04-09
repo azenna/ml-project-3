@@ -1,6 +1,7 @@
 # Report
 
 ## Hyperparamater Tuning
+These are the configurations and results of every explored architecture on each dataset for the project.
 
 ### MNIST
 
@@ -188,8 +189,6 @@
 +--------+-------+--------+--------+-------------+
 ```
 
-### Discussion
-
 ## Test Results
 
 ### MNIST
@@ -205,6 +204,13 @@
 +-------------+-------+-------+------+---------+--------+------------+
 ```
 
+
+On the mnist dataset, the best configurations for the different depth mlp architectures were stable:
+- learning_rate = .001. Neither of the runs with lr=.0001 or lr=.01, were able to score higher than my baseline run which got a .968, but lr=.01 was able to do the best out of all of the SGD runs and outperformed both the not .0001 adam runs, which is interesting.
+- batch_size = 64. I used 32 as the default batch_size, but 64 seems to receive comprable or better performance in most cases while decreasing the runtime by half. I reget the choice to use 32 as the default batch_size.
+- optimizer = adam. All of the adam runs were able to acheive reasonable peformance on the MNIST set. The lowest adam scored an accuracy of ~.93. The SGD runs were much more sensitive to the other hyperparamaters and scored all over the place, highest = .95, lowest = .35.
+- dropout = .2. It seems that dropout of .5 seemed to underfit, performing slightly worse than .2 with both adam and SGD.
+
 #### CNN
 ```
 +---------------+-------+-------+--------+--------+------------+
@@ -213,7 +219,11 @@
 |  simple_conv  | 0.001 |   64  |  0.0   | 0.9918 | 58.170087s |
 | enhanced_conv | 0.001 |   64  | 0.0001 | 0.9915 | 78.339576s |
 +---------------+-------+-------+--------+--------+------------+
+
 ```
+
+I found similar values for the two shared paramaters with mlp architectures. Medium learning rate, medium batch size. The regularizaiton constant did differ between architecture complexities for the CNNs. I think this can be accounted for by their differing expressive capability. The enhanced cnn will be more likely to overfit, because of its deeper architecture, and the simple cnn more general because of its reduced complexity. L2 regularization would help smooth out a model with higher variance, but potentially increase the bias of a more or adequatley biased model. The simple cnn did perfrom better on test, so I think it was adequatley biased as is, but the difference in accuracy is vanishingly small.
+
 
 ### CIFAR10
 
@@ -228,6 +238,8 @@
 +-------------+--------+-------+------+---------+--------+------------+
 ```
 
+Interesting differences in paramater configurations across architectures for mlps on CIFAR 10 with albeit pretty poor accuracy. Best dropout was .2 for all following the best configuration for mnist.  It is suprising that you can acheive solid performance even in a shallow network even when half the weights are dropped. Best batch_size for all three architectures was 32, which is not what I had expected given the mnist data. My best guess for what is happening is that the model is not able to learn important features, shown by the low accuracy. The small batch sizes create noisier more general gradient updates, that are better able to generalize compared to configurations with larger batches. Which might be learning less general features from the training data. The learning rates were all over the place. Interestingly lr=.01 again acheived relativley high performance when paired with the SGD optimizer, similar behavior to the MNIST configurations.
+
 #### CNN
 ```
 +---------------+-------+-------+-----+--------+-------------+
@@ -237,6 +249,12 @@
 |  simple_conv  | 0.001 |   32  | 0.0 | 0.6781 | 104.134194s |
 +---------------+-------+-------+-----+--------+-------------+
 ```
+
+Much worse performance all around on the CIFAR10 set compared to MNIST results. CNNs did however manage much better performance than MLPs on the set.
+
+- lr = .001. Again following the trend from all other architectures in the project.
+- l2 = 0.0. No weight decay tracks given the low accuracy of the models. It's not overfitting, or doing a good job learning really probably from insufficient model complexity.
+- batchsize = 64 for enhanced, 32 for simple. It does seem like once the model complexity increases to some threshold, it begins to prefer larger batch sizes. Lower batch sizes are able to perform better in validation when the model accuracy is limited by it's complexity, but as the complexity increases and the potentail for greater accuracy, larger batches begin to work better? I would need to do more testing, but it's an interesting thought.
 
 
 

@@ -179,8 +179,10 @@ def main():
 
     if args.configs and args.tune:
         run_all_configs(configuration.tune_configurations)
-    else:
+    elif args.configs:
         run_all_configs(configuration.test_configurations)
+    else:
+        run(args)
 
 
 if __name__ == "__main__":
