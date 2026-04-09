@@ -5,6 +5,7 @@ project3/
 ├── README.md                                 # you are here
 ├── report.md                                 # report source
 ├── report.pdf                                # compiled report
+├── ai_transcript.pdf                         # my conversations with gemini :()
 ├── pyproject.toml                            # dependencies for uv
 ├── uv.lock                                   # uv lockfile
 ├── main.py                                   # entrypoint (run me)
