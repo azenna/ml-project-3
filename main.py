@@ -11,31 +11,34 @@ import sys
 import argparse
 import json
 from datetime import datetime, timezone
-from torchvision.datasets import MNIST
-import os
-import urllib.request
-import gzip
-import shutil
+import configuration
 
 device = torch.device("cuda")
 
 
 def load_train_test(dataset_str, batch_size, validation=False):
+    ts = transforms.Compose([transforms.ToTensor()])
 
     if dataset_str == "mnist":
-        dataset = MNIST
         validation_split = [50000, 10000]
+
+        full_train = torchvision.datasets.MNIST(
+            root="./data", train=True, download=True, transform=ts
+        )
+
+        test_dataset = torchvision.datasets.MNIST(
+            root="./data", train=False, download=True, transform=ts
+        )
+
     elif dataset_str == "cifar":
-        dataset = torchvision.datasets.CIFAR10
+        full_train = torchvision.datasets.CIFAR10(
+            root="./data", train=True, download=True, transform=ts
+        )
+
+        test_dataset = torchvision.datasets.CIFAR10(
+            root="./data", train=False, download=True, transform=ts
+        )
         validation_split = [45000, 5000]
-
-    ts = transforms.Compose(
-        [
-            transforms.ToTensor(),
-        ]
-    )
-
-    full_train = dataset(root="./data", train=True, download=False, transform=ts)
 
     if validation:
         train, val = random_split(full_train, validation_split)
@@ -46,8 +49,7 @@ def load_train_test(dataset_str, batch_size, validation=False):
 
         return (train_loader, val_loader)
     else:
-        test = dataset(root="./data", train=False, download=False, transform=ts)
-        test_loader = DataLoader(test, batch_size=batch_size, num_workers=8)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=8)
 
         train_loader = DataLoader(
             full_train, batch_size=batch_size, shuffle=True, num_workers=8
@@ -94,8 +96,8 @@ def evaluate(model, loader):
     return classification_report(targets, all_preds, digits=4, output_dict=True)
 
 
-def run(args):
-    arch = architecture.architectures[args.dataset][args.arch]
+def train_and_eval(args):
+    arch = architecture.get_architectures(args.dropout)[args.dataset][args.arch]
 
     (train_load, eval_load) = load_train_test(
         args.dataset, args.batch_size, validation=args.tune
@@ -110,7 +112,9 @@ def run(args):
 
     loss_fn = nn.CrossEntropyLoss()
 
-    train(model, train_load, loss_fn, opt)
+    start = time.perf_counter()
+    train(model, train_load, loss_fn, opt, num_epochs=args.num_epochs)
+    end = time.perf_counter()
 
     classification_report = evaluate(model, eval_load)
 
@@ -123,8 +127,24 @@ def run(args):
         "batch_size": args.batch_size,
         "learning_rate": args.learning_rate,
         "optimizer": args.optimizer,
+        "num_epochs": args.num_epochs,
+        "dropout": args.dropout,
+        "weight_decay": args.weight_decay,
         "classification_report": classification_report,
+        "runtime": f"{end - start:.06f}s",
     }
+
+
+def run(args):
+    run_log = train_and_eval(args)
+
+    with open("run_log.jsonl", "a") as f:
+        f.write(json.dumps(run_log) + "\n")
+
+
+def run_all_configs():
+    for config in configuration.configurations:
+        run(config)
 
 
 # Program that keeps a set of logs of each run
@@ -134,17 +154,22 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--tune", action="store_true")
-    parser.add_argument("-a", "--arch", required=True)
-    parser.add_argument("-d", "--dataset", required=True)
+    parser.add_argument("--configs", action="store_true")
+    parser.add_argument("-a", "--arch")
+    parser.add_argument("-d", "--dataset")
     parser.add_argument("-b", "--batch_size", type=int, default=32)
+    parser.add_argument("-n", "--num_epochs", type=int, default=16)
     parser.add_argument("-o", "--optimizer", default="adam")
     parser.add_argument("-l", "--learning_rate", type=float, default=0.001)
+    parser.add_argument("--dropout", type=float, default=0.5)
+    parser.add_argument("--weight_decay", type=float, default=0.0)
 
     args = parser.parse_args()
-    run_log = run(args)
 
-    with open("run_log.jsonl", "a") as f:
-        f.write(json.dumps(run_log) + "\n")
+    if args.configs:
+        run_all_configs()
+    else:
+        run(args)
 
 
 if __name__ == "__main__":
